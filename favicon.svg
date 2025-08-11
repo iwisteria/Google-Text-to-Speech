@@ -1,17 +1,14 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <defs>
-    <!-- 濃い青から紫 -->
-    <linearGradient id="grad-indigo-violet" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1"></stop>
-      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1"></stop>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
     </linearGradient>
   </defs>
-
-  <!-- 背景 -->
-  <rect width="512" height="512" fill="url(#grad-indigo-violet)" rx="80"></rect>
-
+  
+  <!-- 背景円 -->
+  <circle cx="16" cy="16" r="15" fill="url(#bg)"/>
+  
   <!-- 「読」文字 -->
-  <text x="50%" y="50%" font-size="320" fill="white" font-family="sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central">
-    読
-  </text>
+  <text x="16" y="16" font-size="20" fill="white" font-family="serif" font-weight="bold" text-anchor="middle" dominant-baseline="central">読</text>
 </svg>
