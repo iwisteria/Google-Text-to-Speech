@@ -1,0 +1,58 @@
+{
+  "name": "日本語音声生成ツール",
+  "short_name": "TTS Tool",
+  "description": "Google Cloud Text-to-Speech APIを使用した高品質な日本語音声生成ツール",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grad)' rx='20'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.35em' font-size='120' fill='white'%3E🎤%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grad)' rx='50'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.35em' font-size='300' fill='white'%3E🎤%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grad)' rx='20'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.35em' font-size='110' fill='white'%3E🎤%3C/text%3E%3C/svg%3E",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "apple-touch-icon"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'%3E%3Crect width='100%25' height='100%25' fill='%23f8f9fa'/%3E%3Crect x='0' y='0' width='100%25' height='120' fill='url(%23grad)'/%3E%3Ctext x='50%25' y='60' text-anchor='middle' dy='.35em' font-size='36' fill='white'%3E🎤 日本語音声生成ツール%3C/text%3E%3C/svg%3E",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "アプリケーションのメイン画面"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "音声生成",
+      "short_name": "生成",
+      "description": "テキストから音声を生成",
+      "url": "/?action=generate",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Ctext y='.9em' font-size='70'%3E🎵%3C/text%3E%3C/svg%3E",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

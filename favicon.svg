@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 濃い青から紫 -->
+    <linearGradient id="grad-indigo-violet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="512" height="512" fill="url(#grad-indigo-violet)" rx="80"></rect>
+
+  <!-- 「読」文字 -->
+  <text x="50%" y="50%" font-size="320" fill="white" font-family="sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+    読
+  </text>
+</svg>
