@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 日本語音声生成ツール</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="csrf-token" content="">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎤 日本語音声生成ツール</h1>
+            <p class="subtitle">テキストを自然な音声に変換します</p>
+        </header>
+
+        <section class="api-section">
+            <h2>🔑 API設定</h2>
+            <div class="setting-group">
+                <label class="setting-label">Google Cloud API キー</label>
+                <div class="api-input-wrapper">
+                    <input type="password" id="apiKeyInput" class="api-input" placeholder="AIzaSyC...（任意：未入力の場合はサーバー設定を使用）">
+                    <button type="button" id="toggleApiKey" class="toggle-btn">👁</button>
+                </div>
+                <div class="api-actions">
+                    <button type="button" id="saveApiKey" class="api-save-btn">💾 保存</button>
+                    <button type="button" id="clearApiKey" class="api-clear-btn">🗑 削除</button>
+                    <span id="saveStatus" class="save-status"></span>
+                </div>
+                <p class="api-note">※ APIキーを入力すると、直接Google Cloudに接続します。未入力の場合はサーバー経由で処理されます。</p>
+            </div>
+        </section>
+
+        <section class="text-section">
+            <h2>📝 テキスト入力</h2>
+            <div class="input-wrapper">
+                <textarea id="textInput" placeholder="読み上げたいテキストを入力してください..." rows="8"></textarea>
+                <div class="char-count">
+                    <span id="charCount">0</span> / 5000 文字
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h2>🎧 音声設定</h2>
+            
+            <div class="setting-group">
+                <label class="setting-label">音声タイプ</label>
+                <select id="voiceSelect" class="setting-select">
+                    <option value="ja-JP-Neural2-B">日本語 女性 (自然)</option>
+                    <option value="ja-JP-Neural2-C">日本語 男性 (深い)</option>
+                    <option value="ja-JP-Neural2-D">日本語 男性 (明瞭)</option>
+                    <option value="en-US-Neural2-F">英語 女性</option>
+                    <option value="en-US-Neural2-D">英語 男性</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label class="setting-label">読み上げ速度</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="speedRange" min="0.25" max="4.0" value="1.0" step="0.25" class="slider">
+                    <div class="slider-labels">
+                        <span>遅い</span>
+                        <span id="speedValue">1.0x</span>
+                        <span>速い</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label class="setting-label">生成モード</label>
+                <select id="previewToggle" class="setting-select">
+                    <option value="preview">プレビュー（先頭500文字）</option>
+                    <option value="full">全文生成</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="action-section">
+            <button id="generateBtn" class="generate-btn">🎵 音声を生成する</button>
+        </div>
+        
+        <div id="loadingDiv" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>音声を生成中...</p>
+        </div>
+        
+        <div id="resultDiv" class="result" style="display: none;">
+            <h3>生成された音声</h3>
+            <audio id="audioPlayer" controls></audio>
+            <div class="audio-actions">
+                <button id="downloadBtn">ダウンロード</button>
+                <button id="copyLinkBtn">リンクをコピー</button>
+            </div>
+        </div>
+        
+        <div id="errorDiv" class="error" style="display: none;"></div>
+    </div>
+    
+    <script src="security-fixes.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
