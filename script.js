@@ -3,6 +3,7 @@ class TextToSpeechApp {
         this.initializeElements();
         this.bindEvents();
         this.currentAudioBlob = null;
+        this.apiKey = 'YOUR_API_KEY_HERE'; // 後で実際のAPIキーに置き換える
     }
     
     initializeElements() {
@@ -44,8 +45,8 @@ class TextToSpeechApp {
             this.clearApiKeyFromStorage();
         });
         
-        // ページ読み込み時にAPIキーを復元（非同期）
-        this.loadApiKeyFromStorage().catch(console.error);
+        // ページ読み込み時にAPIキーを復元
+        this.loadApiKeyFromStorage();
         
         // 文字カウンター
         this.textInput.addEventListener('input', () => {
@@ -115,22 +116,68 @@ class TextToSpeechApp {
         this.generateBtn.disabled = false;
     }
     
-    async generateSpeech() {
-        // レート制限チェック
-        if (!window.rateLimiter.canMakeRequest()) {
-            const resetTime = window.rateLimiter.getTimeUntilReset();
-            this.showError(`リクエスト制限に達しています。${resetTime}秒後に再試行してください。`);
-            return;
+    // APIキーを取得（入力されている場合は優先）
+    getCurrentApiKey() {
+        const inputApiKey = this.apiKeyInput.value.trim();
+        return inputApiKey || this.apiKey;
+    }
+    
+    // 入力値のサニタイゼーション
+    sanitizeText(text) {
+        if (typeof text !== 'string') return '';
+        
+        return text
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // スクリプトタグ除去
+            .replace(/<[^>]*>/g, '') // HTMLタグ除去
+            .replace(/javascript:/gi, '') // JavaScriptプロトコル除去
+            .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // イベントハンドラー除去
+            .trim()
+            .substring(0, 5000); // 文字数制限
+    }
+    
+    // APIキーの検証
+    validateApiKey(apiKey) {
+        if (!apiKey || typeof apiKey !== 'string') {
+            return { valid: false, error: 'APIキーが必要です' };
         }
 
+        if (apiKey === 'YOUR_API_KEY_HERE') {
+            return { valid: false, error: '実際のAPIキーを入力してください' };
+        }
+
+        if (!apiKey.startsWith('AIza')) {
+            return { valid: false, error: 'Google Cloud APIキーの形式が正しくありません' };
+        }
+
+        if (apiKey.length < 35 || apiKey.length > 45) {
+            return { valid: false, error: 'APIキーの長さが正しくありません' };
+        }
+
+        // 危険な文字のチェック
+        if (!/^[A-Za-z0-9_-]+$/.test(apiKey)) {
+            return { valid: false, error: 'APIキーに無効な文字が含まれています' };
+        }
+
+        return { valid: true };
+    }
+    
+    async generateSpeech() {
         const rawText = this.textInput.value.trim();
         if (!rawText) {
             this.showError('テキストを入力してください。');
             return;
         }
         
+        // APIキーの検証
+        const currentApiKey = this.getCurrentApiKey();
+        const apiKeyValidation = this.validateApiKey(currentApiKey);
+        if (!apiKeyValidation.valid) {
+            this.showError(apiKeyValidation.error);
+            return;
+        }
+        
         // 入力値をサニタイズ
-        const text = window.inputSanitizer.sanitizeText(rawText);
+        const text = this.sanitizeText(rawText);
         if (!text) {
             this.showError('有効なテキストを入力してください。');
             return;
@@ -155,45 +202,116 @@ class TextToSpeechApp {
         this.showLoading();
         
         try {
-            const requestBody = {
-                text: processedText,
-                voice: this.voiceSelect.value,
-                speed: parseFloat(this.speedRange.value),
-                isPreview: isPreviewMode,
-                csrfToken: window.csrfProtection.getToken()
-            };
+            // Google Cloud Text-to-Speech APIリクエスト
+            const response = await this.callGoogleTTSAPI(processedText, currentApiKey);
             
-            // セキュアにAPIキーを取得
-            try {
-                const apiKey = await window.secureApiKeyManager.getApiKeySecurely();
-                if (apiKey) {
-                    requestBody.apiKey = apiKey;
-                }
-            } catch (error) {
-                console.warn('APIキーの取得に失敗:', error);
+            if (response.audioContent) {
+                // Base64をBlobに変換
+                const audioBlob = this.base64ToBlob(response.audioContent, 'audio/mpeg');
+                this.showResult(audioBlob);
+            } else {
+                throw new Error('音声データが生成されませんでした');
             }
-            
-            const response = await fetch('/api/synthesize', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': window.csrfProtection.getToken()
-                },
-                body: JSON.stringify(requestBody)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'サーバーエラーが発生しました。');
-            }
-            
-            const audioBlob = await response.blob();
-            this.showResult(audioBlob);
             
         } catch (error) {
             console.error('音声生成エラー:', error);
-            this.showError(`音声生成に失敗しました: ${error.message}`);
+            
+            // エラーメッセージを日本語化
+            let errorMessage = '音声生成に失敗しました';
+            
+            if (error.message.includes('API key not valid')) {
+                errorMessage = 'APIキーが無効です。正しいAPIキーを入力してください。';
+            } else if (error.message.includes('quota')) {
+                errorMessage = 'API使用量制限に達しています。しばらく待ってから再試行してください。';
+            } else if (error.message.includes('string did not match the expected pattern')) {
+                errorMessage = 'APIキーの形式が正しくありません。Google Cloud コンソールで生成されたAPIキーを使用してください。';
+            } else if (error.message.includes('SERVICE_DISABLED')) {
+                errorMessage = 'Text-to-Speech APIが有効化されていません。Google Cloudコンソールで有効化してください。';
+            } else if (error.message.includes('PERMISSION_DENIED')) {
+                errorMessage = 'APIキーの権限が不足しています。Text-to-Speech APIへのアクセス権限を確認してください。';
+            } else if (error.message.includes('blocked')) {
+                errorMessage = 'CORSエラー：ブラウザから直接APIを呼び出せません。サーバー経由での実装を検討してください。';
+            }
+            
+            this.showError(`${errorMessage}: ${error.message}`);
         }
+    }
+    
+    // Google Cloud Text-to-Speech API呼び出し
+    async callGoogleTTSAPI(text, apiKey) {
+        const voice = this.voiceSelect.value;
+        const speed = parseFloat(this.speedRange.value);
+        const languageCode = voice.substring(0, 5); // 例: "ja-JP"
+        
+        const requestBody = {
+            input: {
+                text: text
+            },
+            voice: {
+                languageCode: languageCode,
+                name: voice,
+                ssmlGender: voice.includes('B') || voice.includes('F') ? 'FEMALE' : 'MALE'
+            },
+            audioConfig: {
+                audioEncoding: 'MP3',
+                speakingRate: speed,
+                pitch: 0,
+                volumeGainDb: 0,
+                sampleRateHertz: 24000,
+                effectsProfileId: ['large-home-entertainment-class-device']
+            }
+        };
+        
+        console.log('TTS API Request:', {
+            textLength: text.length,
+            voice: voice,
+            speed: speed,
+            languageCode: languageCode
+        });
+        
+        // Google Cloud Text-to-Speech API エンドポイント
+        const apiUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('API Error Response:', errorData);
+            
+            let errorMessage = 'APIエラー';
+            if (errorData.error) {
+                errorMessage = errorData.error.message || errorData.error.code || 'Unknown API error';
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log('TTS API Success:', {
+            hasAudioContent: !!data.audioContent,
+            audioContentLength: data.audioContent ? data.audioContent.length : 0
+        });
+        
+        return data;
+    }
+    
+    // Base64をBlobに変換
+    base64ToBlob(base64, mimeType) {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: mimeType });
     }
     
     downloadAudio() {
@@ -202,7 +320,7 @@ class TextToSpeechApp {
         const url = URL.createObjectURL(this.currentAudioBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `substack-audio-${Date.now()}.mp3`;
+        a.download = `japanese-tts-audio-${Date.now()}.mp3`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -231,15 +349,13 @@ class TextToSpeechApp {
         }
     }
     
-    // セキュアなAPIキー管理メソッド
-    async loadApiKeyFromStorage() {
+    // APIキー管理メソッド（セキュリティ機能なしの簡易版）
+    loadApiKeyFromStorage() {
         try {
-            if (window.secureApiKeyManager.hasApiKey()) {
-                const apiKey = await window.secureApiKeyManager.getApiKeySecurely();
-                if (apiKey) {
-                    this.apiKeyInput.value = apiKey;
-                    this.showSaveStatus('✅ セキュア保存済み', 'success');
-                }
+            const savedApiKey = localStorage.getItem('tts-api-key');
+            if (savedApiKey && savedApiKey !== 'YOUR_API_KEY_HERE') {
+                this.apiKeyInput.value = savedApiKey;
+                this.showSaveStatus('✅ 保存済み', 'success');
             }
         } catch (error) {
             console.error('APIキーの読み込みに失敗:', error);
@@ -247,19 +363,19 @@ class TextToSpeechApp {
         }
     }
     
-    async saveApiKeyToStorage() {
-        const apiKey = window.inputSanitizer.sanitizeText(this.apiKeyInput.value);
+    saveApiKeyToStorage() {
+        const apiKey = this.apiKeyInput.value.trim();
         
         // 入力値検証
-        const validation = window.inputSanitizer.validateApiKey(apiKey);
+        const validation = this.validateApiKey(apiKey);
         if (!validation.valid) {
             this.showSaveStatus(`❌ ${validation.error}`, 'error');
             return;
         }
         
         try {
-            await window.secureApiKeyManager.saveApiKeySecurely(apiKey);
-            this.showSaveStatus('✅ セキュア保存完了', 'success');
+            localStorage.setItem('tts-api-key', apiKey);
+            this.showSaveStatus('✅ 保存完了', 'success');
         } catch (error) {
             console.error('APIキーの保存に失敗:', error);
             this.showSaveStatus('❌ 保存に失敗しました', 'error');
@@ -268,9 +384,9 @@ class TextToSpeechApp {
     
     clearApiKeyFromStorage() {
         try {
-            window.secureApiKeyManager.clearApiKey();
+            localStorage.removeItem('tts-api-key');
             this.apiKeyInput.value = '';
-            this.showSaveStatus('🗑 セキュア削除完了', 'success');
+            this.showSaveStatus('🗑 削除完了', 'success');
         } catch (error) {
             console.error('APIキーの削除に失敗:', error);
             this.showSaveStatus('❌ 削除に失敗しました', 'error');
